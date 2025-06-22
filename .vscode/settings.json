@@ -54,5 +54,10 @@
     "pester.runTestsInNewProcess": true,
     "pester.pesterModulePath": "./output/RequiredModules/Pester",
     "powershell.pester.codeLens": true,
-    "pester.suppressCodeLensNotice": true
+    "pester.suppressCodeLensNotice": true,
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#5C0F17",
+        "titleBar.activeBackground": "#801520",
+        "titleBar.activeForeground": "#FEFBFB"
+    }
 }
