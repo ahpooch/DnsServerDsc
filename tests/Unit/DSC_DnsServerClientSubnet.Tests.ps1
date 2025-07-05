@@ -396,6 +396,8 @@ Describe 'DSC_DnsServerClientSubnet\Test-TargetResource' -Tag 'Test' {
 
 Describe 'DSC_DnsServerClientSubnet\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
+        Mock -CommandName Assert-Module
+
         $IPv4Present = {
             [PSCustomObject]@{
                 Name       = 'ClientSubnetA'

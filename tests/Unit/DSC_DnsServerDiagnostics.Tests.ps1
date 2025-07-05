@@ -495,6 +495,7 @@ Describe 'DSC_DnsServerDiagnostics\Test-TargetResource' -Tag 'Test' {
 
 Describe 'DSC_DnsServerDiagnostics\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
+        Mock -CommandName Assert-Module
         Mock -CommandName Set-DnsServerDiagnostics
     }
 

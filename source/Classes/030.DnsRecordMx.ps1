@@ -89,14 +89,18 @@ class DnsRecordMx : DnsRecordBase
             $dnsParameters['ZoneScope'] = $this.ZoneScope
         }
 
-        $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
-            $translatedRecordName = $this.getRecordName()
-            if ($translatedRecordName -eq '.')
-            {
-                $translatedRecordName = '@'
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
+                $translatedRecordName = $this.getRecordName()
+                if ($translatedRecordName -eq '.') {
+                    $translatedRecordName = '@'
+                }
+                $_.HostName -eq $translatedRecordName -and
+                $_.RecordData.MailExchange -eq "$($this.MailExchange)."
             }
-            $_.HostName -eq $translatedRecordName -and
-            $_.RecordData.MailExchange -eq "$($this.MailExchange)."
+        } else {
+            # Returning a $null record so the resource can be used for revision purposes on systems without the DnsServer module.
+            $record = $null
         }
 
         <#

@@ -161,6 +161,7 @@ Context 'DSC_DnsServerConditionalForwarder\Get-TargetResource' -Tag 'Get' {
 
 Context 'DSC_DnsServerConditionalForwarder\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
+        Mock -CommandName Assert-Module
         Mock Add-DnsServerConditionalForwarderZone
         Mock Get-DnsServerZone {
             @{

@@ -65,8 +65,6 @@ Describe 'DSC_DnsServerZoneTransfer\Get-TargetResource' -Tag 'Get' {
     Context 'When command is invoked' {
         BeforeAll {
             $XferId2Name = @('Any', 'Named', 'Specific', 'None')
-
-            Mock -CommandName Assert-Module
             Mock -CommandName Get-CimInstance -MockWith { return @{
                     Name              = 'example.com'
                     SecureSecondaries = $XferId2Name.IndexOf('Any')
@@ -98,7 +96,6 @@ Describe 'DSC_DnsServerZoneTransfer\Test-TargetResource' -Tag 'Test' {
     Context 'When command is invoked' {
         Context 'When the system is in the desired state' {
             BeforeAll {
-                Mock -CommandName Assert-Module
                 Mock -CommandName Test-ResourceProperties -MockWith { return $true }
             }
 
@@ -115,15 +112,12 @@ Describe 'DSC_DnsServerZoneTransfer\Test-TargetResource' -Tag 'Test' {
 
                     Test-TargetResource @params | Should -BeTrue
                 }
-
-                Should -Invoke -CommandName Assert-Module -Scope It -Times 1 -Exactly
                 Should -Invoke -CommandName Test-ResourceProperties -Scope It -Times 1 -Exactly
             }
         }
 
         Context 'When the system is not in the desired state' {
             BeforeAll {
-                Mock -CommandName Assert-Module
                 Mock -CommandName Test-ResourceProperties
             }
 
@@ -140,8 +134,6 @@ Describe 'DSC_DnsServerZoneTransfer\Test-TargetResource' -Tag 'Test' {
 
                     Test-TargetResource @params | Should -BeFalse
                 }
-
-                Should -Invoke -CommandName Assert-Module -Scope It -Times 1 -Exactly
                 Should -Invoke -CommandName Test-ResourceProperties -Scope It -Times 1 -Exactly
             }
         }
@@ -149,12 +141,12 @@ Describe 'DSC_DnsServerZoneTransfer\Test-TargetResource' -Tag 'Test' {
 }
 
 Describe 'DSC_DnsServerZoneTransfer\Set-TargetResource' -Tag 'Set' {
+    BeforeAll {
+        Mock -CommandName Assert-Module
+        Mock -CommandName Test-ResourceProperties
+        Mock -CommandName Restart-Service
+    }
     Context 'When command is invoked' {
-        BeforeAll {
-            Mock -CommandName Test-ResourceProperties
-            Mock -CommandName Restart-Service
-        }
-
         It 'Should call expected mocks' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0

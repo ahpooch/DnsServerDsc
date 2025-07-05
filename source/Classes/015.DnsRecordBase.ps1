@@ -247,7 +247,7 @@ class DnsRecordBase : ResourcePropertiesBase
         return $isInDesiredState
     }
 
-    #endregion
+    #endregion Generic DSC methods -- DO NOT OVERRIDE
 
     #region Methods to override
 
@@ -286,5 +286,5 @@ class DnsRecordBase : ResourcePropertiesBase
         throw $this.localizedData.NewResourceObjectFromRecordNotImplemented
     }
 
-    #endregion
+    #endregion Methods to override
 }

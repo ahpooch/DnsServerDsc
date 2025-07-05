@@ -46,6 +46,24 @@ function Get-TargetResource
         $Name
     )
 
+    Write-Verbose -Message ($script:localizedData.GettingDnsServerConditionalForwarderMessage -f $Name)
+
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Ensure                 = 'Absent'
+            Name                   = $Name
+            MasterServers          = $null
+            ReplicationScope       = $null
+            DirectoryPartitionName = $null
+            ZoneType               = $null
+        }
+
+        return $targetResource
+    }
+
     $targetResource = @{
         Ensure                 = 'Absent'
         Name                   = $Name
@@ -59,9 +77,9 @@ function Get-TargetResource
     if ($zone)
     {
         Write-Verbose ($script:localizedData.FoundZone -f @(
-            $zone.ZoneType
-            $Name
-        ))
+                $zone.ZoneType
+                $Name
+            ))
 
         $targetResource.ZoneType = $zone.ZoneType
     }
@@ -85,7 +103,7 @@ function Get-TargetResource
         Write-Verbose ($script:localizedData.CouldNotFindZone -f $Name)
     }
 
-    $targetResource
+    return $targetResource
 }
 
 <#
@@ -167,9 +185,9 @@ function Set-TargetResource
                 Remove-DnsServerZone -Name $Name
 
                 Write-Verbose ($script:localizedData.RecreateZone -f @(
-                    $zone.ZoneType
-                    $Name
-                ))
+                        $zone.ZoneType
+                        $Name
+                    ))
 
                 $zone = $null
             }
@@ -178,9 +196,9 @@ function Set-TargetResource
                 if ("$($zone.MasterServers)" -ne "$MasterServers")
                 {
                     Write-Verbose ($script:localizedData.UpdatingMasterServers -f @(
-                        $Name
-                        ($MasterServers -join ', ')
-                    ))
+                            $Name
+                            ($MasterServers -join ', ')
+                        ))
 
                     $null = Set-DnsServerConditionalForwarderZone @params
                 }
@@ -207,9 +225,9 @@ function Set-TargetResource
             if (($params.ReplicationScope -and $params.ReplicationScope -ne $zone.ReplicationScope) -or $params.DirectoryPartitionName)
             {
                 Write-Verbose ($script:localizedData.MoveADZone -f @(
-                    $Name
-                    $ReplicationScope
-                ))
+                        $Name
+                        $ReplicationScope
+                    ))
 
                 $null = Set-DnsServerConditionalForwarderZone @params
             }
@@ -308,9 +326,9 @@ function Test-TargetResource
         if ($zone.ZoneType -ne 'Forwarder')
         {
             Write-Verbose ($script:localizedData.IncorrectZoneType -f @(
-                $Name
-                $zone.ZoneType
-            ))
+                    $Name
+                    $zone.ZoneType
+                ))
 
             return $false
         }
@@ -332,10 +350,10 @@ function Test-TargetResource
         if ($ReplicationScope -ne 'None' -and $zone.ReplicationScope -ne $ReplicationScope)
         {
             Write-Verbose ($script:localizedData.ReplicationScopeDoesNotMatch -f @(
-                $Name
-                $zone.ReplicationScope
-                $ReplicationScope
-            ))
+                    $Name
+                    $zone.ReplicationScope
+                    $ReplicationScope
+                ))
 
             return $false
         }
@@ -343,9 +361,9 @@ function Test-TargetResource
         if ($ReplicationScope -eq 'Custom' -and $zone.DirectoryPartitionName -ne $DirectoryPartitionName)
         {
             Write-Verbose ($script:localizedData.DirectoryPartitionDoesNotMatch -f @(
-                $Name
-                $DirectoryPartitionName
-            ))
+                    $Name
+                    $DirectoryPartitionName
+                ))
 
             return $false
         }
@@ -364,10 +382,10 @@ function Test-TargetResource
         if ("$($zone.MasterServers)" -ne "$MasterServers")
         {
             Write-Verbose ($script:localizedData.MasterServersDoNotMatch -f @(
-                $Name
-                ($MasterServers -join ', ')
-                ($zone.MasterServers -join ', ')
-            ))
+                    $Name
+                    ($MasterServers -join ', ')
+                    ($zone.MasterServers -join ', ')
+                ))
 
             return $false
         }
@@ -404,25 +422,25 @@ function Test-DscDnsServerConditionalForwarderParameter
         if ($null -eq $invocationInfo.BoundParameters['MasterServers'] -or $invocationInfo.BoundParameters['MasterServers'].Count -eq 0)
         {
             $pscmdlet.ThrowTerminatingError((
-                New-Object System.Management.Automation.ErrorRecord(
-                    (New-Object System.ArgumentException($script:localizedData.MasterServersIsMandatory)),
-                    'MasterServersIsMandatory',
-                    'InvalidArgument',
-                    $null
-                )
-            ))
+                    New-Object System.Management.Automation.ErrorRecord(
+                        (New-Object System.ArgumentException($script:localizedData.MasterServersIsMandatory)),
+                        'MasterServersIsMandatory',
+                        'InvalidArgument',
+                        $null
+                    )
+                ))
         }
 
         if ($invocationInfo.BoundParameters['ReplicationScope'] -eq 'Custom' -and -not $invocationInfo.BoundParameters['DirectoryPartitionName'])
         {
             $pscmdlet.ThrowTerminatingError((
-                New-Object System.Management.Automation.ErrorRecord(
-                    (New-Object System.ArgumentException($script:localizedData.DirectoryPartitionNameIsMandatory)),
-                    'DirectoryPartitionNameIsMandatory',
-                    'InvalidArgument',
-                    $null
-                )
-            ))
+                    New-Object System.Management.Automation.ErrorRecord(
+                        (New-Object System.ArgumentException($script:localizedData.DirectoryPartitionNameIsMandatory)),
+                        'DirectoryPartitionNameIsMandatory',
+                        'InvalidArgument',
+                        $null
+                    )
+                ))
         }
     }
 }

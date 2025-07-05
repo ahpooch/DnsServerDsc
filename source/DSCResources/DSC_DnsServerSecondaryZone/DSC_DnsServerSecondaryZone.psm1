@@ -19,30 +19,42 @@ function Get-TargetResource
         $MasterServers
     )
 
-#region Input Validation
-
-    # Check for DnsServer module/role
-    Assert-Module -ModuleName 'DnsServer'
-
-#endregion
-
     Write-Verbose -Message 'Getting DNS zone.'
-    $dnsZone = Get-DnsServerZone -Name $Name -ErrorAction SilentlyContinue
-    if ($dnsZone)
+
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
     {
-        $Ensure = 'Present'
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Name          = $Name
+            MasterServers = $null
+            Type          = $null
+            Ensure        = 'Absent'
+        }
+    }
+
+    $dnsZone = Get-DnsServerZone -Name $Name -ErrorAction SilentlyContinue
+
+    $targetResource = if ($dnsZone)
+    {
+        @{
+            Name          = $Name
+            MasterServers = [string[]]$($dnsZone.MasterServers.IPAddressToString)
+            Type          = $dnsZone.ZoneType
+            Ensure        = 'Present'
+        }
     }
     else
     {
-        $Ensure = 'Absent'
+        @{
+            Name          = $Name
+            MasterServers = [string[]]$($dnsZone.MasterServers.IPAddressToString)
+            Type          = $dnsZone.ZoneType
+            Ensure        = 'Absent'
+        }
     }
 
-    @{
-        Name = $Name
-        Ensure = $Ensure
-        MasterServers = [string[]]$($dnsZone.MasterServers.IPAddressToString)
-        Type = $dnsZone.ZoneType
-    }
+    return $targetResource
 }
 
 function Set-TargetResource
@@ -59,7 +71,7 @@ function Set-TargetResource
         $MasterServers,
 
         [Parameter()]
-        [ValidateSet("Present","Absent")]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -89,17 +101,13 @@ function Test-TargetResource
         $MasterServers,
 
         [Parameter()]
-        [ValidateSet("Present","Absent")]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
 
-#region Input Validation
-
-    # Check for DnsServer module/role
     Assert-Module -ModuleName 'DnsServer'
 
-#endregion
     Write-Verbose -Message 'Validating DNS zone.'
     if ($PSBoundParameters.ContainsKey('Debug'))
     {
@@ -109,7 +117,6 @@ function Test-TargetResource
 
 }
 
-#region Helper Functions
 function Test-ResourceProperties
 {
     [CmdletBinding()]
@@ -125,7 +132,7 @@ function Test-ResourceProperties
         $MasterServers,
 
         [Parameter()]
-        [ValidateSet("Present","Absent")]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present',
 
@@ -134,7 +141,7 @@ function Test-ResourceProperties
         $Apply
     )
 
-    $zoneMessage = $($script:localizedData.CheckingZoneMessage) -f $Name
+    $zoneMessage = $($script:localizedData.GettingDnsServerSecondaryZoneMessage) -f $Name
     Write-Verbose -Message $zoneMessage
 
     $dnsZone = Get-DnsServerZone -Name $Name -ErrorAction SilentlyContinue
@@ -149,11 +156,11 @@ function Test-ResourceProperties
         if ($Ensure -eq 'Present')
         {
             # Check if the zone is secondary
-            $secondaryZoneMessage = $script:localizedData.CheckingSecondaryZoneMessage
+            $secondaryZoneMessage = $script:localizedData.GettingDnsServerSecondaryZoneMessage
             Write-Verbose -Message $secondaryZoneMessage
 
             # If the zone is already secondary zone
-            if ($dnsZone.ZoneType -eq "Secondary")
+            if ($dnsZone.ZoneType -eq 'Secondary')
             {
                 $correctZoneMessage = $($script:localizedData.AlreadySecondaryZoneMessage) -f $Name
                 Write-Verbose -Message $correctZoneMessage
@@ -166,7 +173,7 @@ function Test-ResourceProperties
                 if ((-not $dnsZone.MasterServers) -or (Compare-Object $($dnsZone.MasterServers.IPAddressToString) $MasterServers))
                 {
                     $notDesiredPropertyMessage = $($script:localizedData.NotDesiredPropertyMessage) -f `
-                        'master servers',$MasterServers,$dnsZone.MasterServers
+                        'master servers', $MasterServers, $dnsZone.MasterServers
                     Write-Verbose -Message $notDesiredPropertyMessage
 
                     if ($Apply)
@@ -180,7 +187,7 @@ function Test-ResourceProperties
                     {
                         return $false
                     }
-                } # end master server mismatch
+                }
                 else
                 {
                     $desiredPropertyMessage = $($script:localizedData.DesiredPropertyMessage) -f 'master servers'
@@ -189,14 +196,13 @@ function Test-ResourceProperties
                     {
                         return $true
                     }
-                } # end master servers match
-
-            } # end zone is already secondary
+                }
+            }
 
             # If the zone is not secondary, make it so
             else
             {
-                $notCorrectZoneMessage = $($script:localizedData.NotSecondaryZoneMessage) -f $Name,$dnsZone.ZoneType
+                $notCorrectZoneMessage = $($script:localizedData.NotSecondaryZoneMessage) -f $Name, $dnsZone.ZoneType
                 Write-Verbose -Message $notCorrectZoneMessage
 
                 # Convert the zone to Secondary zone
@@ -211,9 +217,8 @@ function Test-ResourceProperties
                 {
                     return $false
                 }
-            } # end zone is not secondary
-
-        }# end ensure -eq present
+            }
+        }
 
         # If zone should be absent
         else
@@ -232,9 +237,8 @@ function Test-ResourceProperties
             {
                 return $false
             }
-        } # end ensure -eq absent
-
-    } # end found dns zone
+        }
+    }
 
     # Not found DNS Zone
     else
@@ -260,14 +264,13 @@ function Test-ResourceProperties
             {
                 return $false
             }
-        } # end ensure -eq Present
+        }
         else
         {
             if (-not $Apply)
             {
                 return $true
             }
-        } # end ensure -eq Absent
+        }
     }
 }
-#endregion

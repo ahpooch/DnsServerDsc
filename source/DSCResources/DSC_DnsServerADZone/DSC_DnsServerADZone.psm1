@@ -16,12 +16,12 @@ function Get-TargetResource
         $Name,
 
         [Parameter()]
-        [ValidateSet('None','NonSecureAndSecure','Secure')]
+        [ValidateSet('None', 'NonSecureAndSecure', 'Secure')]
         [System.String]
         $DynamicUpdate = 'Secure',
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Custom','Domain','Forest','Legacy')]
+        [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
         [System.String]
         $ReplicationScope,
 
@@ -38,12 +38,27 @@ function Get-TargetResource
         $Credential,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
-    Assert-Module -ModuleName 'DNSServer'
-    Write-Verbose ($script:localizedData.CheckingZoneMessage -f $Name, $Ensure)
+
+    Write-Verbose ($script:localizedData.GettingDnsServerAdZoneMessage -f $Name, $Ensure)
+
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Name                   = $Name
+            DynamicUpdate          = $null
+            ReplicationScope       = $null
+            DirectoryPartitionName = $null
+            Ensure                 = 'Absent'
+        }
+
+        return $targetResource
+    }
 
     if (!$PSBoundParameters.ContainsKey('ComputerName') -and $PSBoundParameters.ContainsKey('Credential'))
     {
@@ -51,14 +66,14 @@ function Get-TargetResource
     }
 
     $getParams = @{
-        Name = $Name
+        Name        = $Name
         ErrorAction = 'SilentlyContinue'
     }
 
     if ($PSBoundParameters.ContainsKey('ComputerName'))
     {
         $cimSessionParams = @{
-            ErrorAction = 'SilentlyContinue'
+            ErrorAction  = 'SilentlyContinue'
             ComputerName = $ComputerName
         }
         if ($PSBoundParameters.ContainsKey('Credential'))
@@ -77,15 +92,24 @@ function Get-TargetResource
     {
         Remove-CimSession -CimSession $getParams.CimSession
     }
+
     $targetResource = @{
-        Name = $dnsServerZone.ZoneName
-        DynamicUpdate = $dnsServerZone.DynamicUpdate
-        ReplicationScope = $dnsServerZone.ReplicationScope
+        Name                   = $dnsServerZone.ZoneName
+        DynamicUpdate          = $dnsServerZone.DynamicUpdate
+        ReplicationScope       = $dnsServerZone.ReplicationScope
         DirectoryPartitionName = $dnsServerZone.DirectoryPartitionName
-        Ensure = if ($null -eq $dnsServerZone) { 'Absent' } else { 'Present' }
+        Ensure                 = if ($null -eq $dnsServerZone)
+        {
+            'Absent'
+        }
+        else
+        {
+            'Present'
+        }
     }
+
     return $targetResource
-} #end function Get-TargetResource
+}
 
 function Test-TargetResource
 {
@@ -99,12 +123,12 @@ function Test-TargetResource
         $Name,
 
         [Parameter()]
-        [ValidateSet('None','NonSecureAndSecure','Secure')]
+        [ValidateSet('None', 'NonSecureAndSecure', 'Secure')]
         [System.String]
         $DynamicUpdate = 'Secure',
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Custom','Domain','Forest','Legacy')]
+        [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
         [System.String]
         $ReplicationScope,
 
@@ -121,7 +145,7 @@ function Test-TargetResource
         $Credential,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -137,7 +161,7 @@ function Test-TargetResource
             if ($targetResource.DynamicUpdate -ne $DynamicUpdate)
             {
                 Write-Verbose ($script:localizedData.NotDesiredPropertyMessage -f `
-                    'DynamicUpdate', $DynamicUpdate, $targetResource.DynamicUpdate)
+                        'DynamicUpdate', $DynamicUpdate, $targetResource.DynamicUpdate)
 
                 $targetResourceInCompliance = $false
             }
@@ -145,7 +169,7 @@ function Test-TargetResource
             if ($targetResource.ReplicationScope -ne $ReplicationScope)
             {
                 Write-Verbose ($script:localizedData.NotDesiredPropertyMessage -f `
-                    'ReplicationScope', $ReplicationScope, $targetResource.ReplicationScope)
+                        'ReplicationScope', $ReplicationScope, $targetResource.ReplicationScope)
 
                 $targetResourceInCompliance = $false
             }
@@ -153,7 +177,7 @@ function Test-TargetResource
             if ($DirectoryPartitionName -and $targetResource.DirectoryPartitionName -ne $DirectoryPartitionName)
             {
                 Write-Verbose ($script:localizedData.NotDesiredPropertyMessage -f `
-                    'DirectoryPartitionName', $DirectoryPartitionName, $targetResource.DirectoryPartitionName)
+                        'DirectoryPartitionName', $DirectoryPartitionName, $targetResource.DirectoryPartitionName)
 
                 $targetResourceInCompliance = $false
             }
@@ -178,7 +202,7 @@ function Test-TargetResource
     }
 
     return $targetResourceInCompliance
-} #end function Test-TargetResource
+}
 
 function Set-TargetResource
 {
@@ -191,12 +215,12 @@ function Set-TargetResource
         $Name,
 
         [Parameter()]
-        [ValidateSet('None','NonSecureAndSecure','Secure')]
+        [ValidateSet('None', 'NonSecureAndSecure', 'Secure')]
         [System.String]
         $DynamicUpdate = 'Secure',
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Custom','Domain','Forest','Legacy')]
+        [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
         [System.String]
         $ReplicationScope,
 
@@ -213,7 +237,7 @@ function Set-TargetResource
         $Credential,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -229,7 +253,7 @@ function Set-TargetResource
     if ($PSBoundParameters.ContainsKey('ComputerName'))
     {
         $cimSessionParams = @{
-            ErrorAction = 'SilentlyContinue'
+            ErrorAction  = 'SilentlyContinue'
             ComputerName = $ComputerName
         }
 
@@ -301,7 +325,7 @@ function Set-TargetResource
             Write-Verbose ($script:localizedData.AddingZoneMessage -f $targetResource.Name)
 
             $params += @{
-                DynamicUpdate = $DynamicUpdate
+                DynamicUpdate    = $DynamicUpdate
                 ReplicationScope = $ReplicationScope
             }
 
@@ -335,4 +359,4 @@ function Set-TargetResource
     {
         Remove-CimSession -CimSession $params.CimSession
     }
-} #end function Set-TargetResource
+}

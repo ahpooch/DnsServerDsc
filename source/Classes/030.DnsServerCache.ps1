@@ -122,17 +122,34 @@ class DnsServerCache : ResourceBase
             ComputerName = $properties.DnsServer
         }
 
-        $getCurrentStateResult = Get-DnsServerCache @getParameters
+        if ($null -ne (Get-Module DnsServer -ListAvailable))
+        {
+            $getCurrentStateResult = Get-DnsServerCache @getParameters
 
-        $state = @{
-            DnsServer                        = $properties.DnsServer
-            IgnorePolicies                   = $getCurrentStateResult.IgnorePolicies
-            LockingPercent                   = [System.UInt32] $getCurrentStateResult.LockingPercent
-            MaxKBSize                        = [System.UInt32] $getCurrentStateResult.MaxKBSize
-            MaxNegativeTtl                   = $getCurrentStateResult.MaxNegativeTtl
-            MaxTtl                           = $getCurrentStateResult.MaxTtl
-            EnablePollutionProtection        = $getCurrentStateResult.EnablePollutionProtection
-            StoreEmptyAuthenticationResponse = $getCurrentStateResult.StoreEmptyAuthenticationResponse
+            $state = @{
+                DnsServer                        = $properties.DnsServer
+                IgnorePolicies                   = $getCurrentStateResult.IgnorePolicies
+                LockingPercent                   = [System.UInt32] $getCurrentStateResult.LockingPercent
+                MaxKBSize                        = [System.UInt32] $getCurrentStateResult.MaxKBSize
+                MaxNegativeTtl                   = $getCurrentStateResult.MaxNegativeTtl
+                MaxTtl                           = $getCurrentStateResult.MaxTtl
+                EnablePollutionProtection        = $getCurrentStateResult.EnablePollutionProtection
+                StoreEmptyAuthenticationResponse = $getCurrentStateResult.StoreEmptyAuthenticationResponse
+            }
+        }
+        else
+        {
+            # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+            $state = @{
+                DnsServer                        = $properties.DnsServer
+                IgnorePolicies                   = $null
+                LockingPercent                   = $null
+                MaxKBSize                        = $null
+                MaxNegativeTtl                   = $null
+                MaxTtl                           = $null
+                EnablePollutionProtection        = $null
+                StoreEmptyAuthenticationResponse = $null
+            }
         }
 
         return $state

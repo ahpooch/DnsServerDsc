@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added unit tests for `Convert-RootHintsToHashtable`.
 - Revert to DscResource.Test 0.16.3.
 
+- Renamed *.tests.ps1 to *.Tests.ps1 using `git mv -f` to reindex files.
+- Standardized resources to use `return $targetResource` in Get-TargetResource method.
+
+- Added details for some `#endregion` comments.
+- Resolved ambiguos messages CheckingZoneMessage for DnsServerPrimaryZone, DnsServerSecodaryZone, DnsServerZoneTransfer.
+  - Changed each localized string to a pattern of Getting<ResourceName>Message.
+
+
 ### Fixed
 
 - DnRecordBase
@@ -72,8 +80,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - DnsServerDsc.Common module complitely removed ([issue #282](https://github.com/dsccommunity/DnsServerDsc/issues/282)).
 - DnsServerDsc
   - Removed `001.ResourceBase` and replaced with `DscResource.Base`.
-  - Removed `Get-ClassName` and `Get-LocalizedDataRecursive` utilizing
-    ones provided in `DscResource.Base`.
+  - Removed `Get-ClassName` and `Get-LocalizedDataRecursive` utilizing ones provided in `DscResource.Base`.
+  - Removed excessive usage of Assert-Module from several Unit tests.
+  - Removed excessive `...` at the end of the localized strings.
+  - Removed excessible usage of `#end function` and similiar comments.
 - DnsServerDsc.Common
   - Removed `Test-DnsDscParameterState` and associated localization entries.
 

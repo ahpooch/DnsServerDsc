@@ -289,6 +289,8 @@ Describe 'DSC_DnsServerZoneAging\Test-TargetResource' {
 
 Describe 'DSC_DnsServerZoneAging\Set-TargetResource' {
     BeforeAll {
+        Mock -CommandName Assert-Module
+
         $zoneName = 'set.contoso.com'
     }
 

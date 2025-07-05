@@ -23,23 +23,33 @@ function Get-TargetResource
         $Type
     )
 
-    #region Input Validation
+    Write-Verbose -Message -Message ($script:localizedData.GettingDnsServerZoneTransferMessage -f $Name, $Type)
 
-    # Check for DnsServer module/role
-    Assert-Module -ModuleName 'DnsServer'
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Name            = $Name
+            Type            = $Type
+            SecondaryServer = $null
+        }
 
-    #endregion
-    Write-Verbose -Message 'Getting DNS zone.'
+        return $targetResource
+    }
+
     $currentZone = Get-CimInstance `
         -ClassName MicrosoftDNS_Zone `
         -Namespace root\MicrosoftDNS `
         -Verbose:$false | Where-Object -FilterScript { $_.Name -eq $Name }
 
-    @{
+    $targetResource = @{
         Name            = $Name
         Type            = $XferId2Name[$currentZone.SecureSecondaries]
         SecondaryServer = $currentZone.SecondaryServers
     }
+
+    return $targetResource
 }
 
 function Set-TargetResource
@@ -91,12 +101,8 @@ function Test-TargetResource
         $SecondaryServer
     )
 
-    #region Input Validation
-
-    # Check for DnsServer module/role
     Assert-Module -ModuleName 'DnsServer'
 
-    #endregion
     Write-Verbose -Message 'Validating DNS zone.'
     if ($PSBoundParameters.ContainsKey('Debug'))
     {
@@ -129,7 +135,7 @@ function Test-ResourceProperties
         $Apply
     )
 
-    $checkZoneMessage = $($script:localizedData.CheckingZoneMessage) `
+    $checkZoneMessage = $($script:localizedData.GettingDnsServerZoneTransferMessage) `
         -f $Name
     Write-Verbose -Message $checkZoneMessage
 
@@ -199,13 +205,13 @@ function Test-ResourceProperties
             {
                 return $false
             }
-        } # end SecondaryServer match
+        }
 
         if (-not $Apply)
         {
             return $true
         }
-    } # end currentZoneTransfer -eq ExpectedZoneTransfer
+    }
     else
     {
         $notDesiredZoneMessage = $($script:localizedData.NotDesiredZoneMessage) `
@@ -229,5 +235,5 @@ function Test-ResourceProperties
         {
             return $false
         }
-    } # end currentZoneTransfer -ne ExpectedZoneTransfer
+    }
 }

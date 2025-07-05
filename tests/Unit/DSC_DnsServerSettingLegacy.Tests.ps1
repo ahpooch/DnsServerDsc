@@ -61,7 +61,6 @@ AfterAll {
 
 Describe 'DSC_DnsServerSettingLegacy\Get-TargetResource' -Tag 'Get' {
     BeforeAll {
-        Mock -CommandName Assert-Module
         Mock -CommandName Get-CimClassMicrosoftDnsServer -MockWith {
             return @{
                 DnsServer            = 'dns1.company.local'
@@ -88,10 +87,6 @@ Describe 'DSC_DnsServerSettingLegacy\Get-TargetResource' -Tag 'Get' {
 }
 
 Describe 'DSC_DnsServerSettingLegacy\Test-TargetResource' -Tag 'Test' {
-    BeforeAll {
-        Mock -CommandName Assert-Module
-    }
-
     Context 'When the system is not in the desired state' {
         BeforeAll {
             Mock -CommandName Get-TargetResource -MockWith {

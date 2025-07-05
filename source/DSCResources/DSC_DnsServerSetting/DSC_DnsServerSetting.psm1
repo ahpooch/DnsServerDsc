@@ -30,9 +30,91 @@ function Get-TargetResource
         $DnsServer
     )
 
-    Assert-Module -ModuleName 'DnsServer'
+    Write-Verbose ($script:localizedData.GettingDnsServerSettingsMessage)
 
-    Write-Verbose ($script:localizedData.GettingDnsServerSettings)
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            DnsServer                               = $DnsServer
+            LocalNetPriority                        = $null
+            AutoConfigFileZones                     = $null
+            AddressAnswerLimit                      = $null
+            UpdateOptions                           = $null
+            DisableAutoReverseZone                  = $null
+            StrictFileParsing                       = $null
+            EnableDirectoryPartitions               = $null
+            XfrConnectTimeout                       = $null
+            AllowUpdate                             = $null
+            BootMethod                              = $null
+            LooseWildcarding                        = $null
+            BindSecondaries                         = $null
+            AutoCacheUpdate                         = $null
+            EnableDnsSec                            = $null
+            NameCheckFlag                           = $null
+            SendPort                                = $null
+            WriteAuthorityNS                        = $null
+            ListeningIPAddress                      = $null
+            RpcProtocol                             = $null
+            RoundRobin                              = $null
+            ForwardDelegations                      = $null
+            EnableIPv6                              = $null
+            EnableOnlineSigning                     = $null
+            EnableDuplicateQuerySuppression         = $null
+            AllowCnameAtNs                          = $null
+            EnableRsoForRodc                        = $null
+            OpenAclOnProxyUpdates                   = $null
+            NoUpdateDelegations                     = $null
+            EnableUpdateForwarding                  = $null
+            EnableWinsR                             = $null
+            DeleteOutsideGlue                       = $null
+            AppendMsZoneTransferTag                 = $null
+            AllowReadOnlyZoneTransfer               = $null
+            EnableSendErrorSuppression              = $null
+            SilentlyIgnoreCnameUpdateConflicts      = $null
+            EnableIQueryResponseGeneration          = $null
+            AdminConfigured                         = $null
+            PublishAutoNet                          = $null
+            ReloadException                         = $null
+            IgnoreServerLevelPolicies               = $null
+            IgnoreAllPolicies                       = $null
+            EnableVersionQuery                      = $null
+            AutoCreateDelegation                    = $null
+            RemoteIPv4RankBoost                     = $null
+            RemoteIPv6RankBoost                     = $null
+            MaximumRodcRsoQueueLength               = $null
+            MaximumRodcRsoAttemptsPerCycle          = $null
+            MaxResourceRecordsInNonSecureUpdate     = $null
+            LocalNetPriorityMask                    = $null
+            TcpReceivePacketSize                    = $null
+            SelfTest                                = $null
+            XfrThrottleMultiplier                   = $null
+            SocketPoolSize                          = $null
+            QuietRecvFaultInterval                  = $null
+            QuietRecvLogInterval                    = $null
+            SyncDsZoneSerial                        = $null
+            ScopeOptionValue                        = $null
+            VirtualizationInstanceOptionValue       = $null
+            ServerLevelPluginDll                    = $null
+            RootTrustAnchorsURL                     = $null
+            SocketPoolExcludedPortRanges            = $null
+            LameDelegationTTL                       = $null
+            MaximumSignatureScanPeriod              = $null
+            MaximumTrustAnchorActiveRefreshInterval = $null
+            ZoneWritebackInterval                   = $null
+            # Read-only propertie
+            DsAvailable                             = $null
+            MajorVersion                            = $null
+            MinorVersion                            = $null
+            BuildNumber                             = $null
+            IsReadOnlyDC                            = $null
+            AllIPAddress                            = $null
+            ForestDirectoryPartitionBaseName        = $null
+            DomainDirectoryPartitionBaseName        = $null
+            MaximumUdpPacketSize                    = $null
+        }
+    }
 
     $getDnsServerSettingParameters = @{
         All = $true
@@ -124,23 +206,23 @@ function Get-TargetResource
         'MaximumUdpPacketSize'
     )
 
-    $returnValue = @{}
+    $targetResource = @{}
 
     foreach ($property in $classProperties)
     {
         if ($property -in $script:timeSpanProperties)
         {
-            $returnValue.Add($property, $dnsServerInstance.$property.ToString())
+            $targetResource.Add($property, $dnsServerInstance.$property.ToString())
         }
         else
         {
-            $returnValue.Add($property, $dnsServerInstance.$property)
+            $targetResource.Add($property, $dnsServerInstance.$property)
         }
     }
 
-    $returnValue.DnsServer = $DnsServer
+    $targetResource.DnsServer = $DnsServer
 
-    return $returnValue
+    return $targetResource
 }
 
 <#

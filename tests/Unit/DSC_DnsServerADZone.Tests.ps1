@@ -79,8 +79,6 @@ Describe 'DSC_DnsServerADZone\Get-TargetResource' -Tag 'Get' {
             DirectoryPartitionName = $testDirectoryPartitionName
             ZoneFile               = $null
         }
-
-        Mock -CommandName 'Assert-Module'
     }
     Context 'When DNS zone exists' {
         BeforeAll {
@@ -522,6 +520,8 @@ Describe 'DSC_DnsServerADZone\Test-TargetResource' -Tag 'Test' {
 
 Describe 'DSC_DnsServerADZone\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
+        Mock -CommandName Assert-Module
+
         $testZoneName = 'example.com'
         $testDynamicUpdate = 'Secure'
         $testReplicationScope = 'Domain'
@@ -537,8 +537,6 @@ Describe 'DSC_DnsServerADZone\Set-TargetResource' -Tag 'Set' {
             Ensure                 = 'Present'
         }
         $fakeAbsentTargetResource = @{ Ensure = 'Absent' }
-
-        Mock -CommandName Assert-Module
     }
 
     Context 'When DNS zone does not exist and "Ensure" = "Present"' {
@@ -697,10 +695,10 @@ Describe 'DSC_DnsServerADZone\Set-TargetResource' -Tag 'Set' {
                 $mockErrorMessage = $script:LocalizedData.DirectoryPartitionReplicationScopeError
                 $params = @{
                     Name                   = 'example.com'
-                    Ensure                 = 'Present'
                     ReplicationScope       = 'Domain'
                     DirectoryPartitionName = 'DirectoryPartitionName'
                     Verbose                = $false
+                    Ensure                 = 'Present'
                 }
 
                 { Set-TargetResource @params } | Should -Throw -ExpectedMessage ($mockErrorMessage + '*')

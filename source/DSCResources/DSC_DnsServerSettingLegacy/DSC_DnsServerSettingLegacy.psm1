@@ -31,13 +31,25 @@ function Get-TargetResource
         $DnsServer
     )
 
-    Assert-Module -ModuleName 'DnsServer'
+    Write-Verbose -Message $script:localizedData.GettingDnsServerSettingsMessage
 
-    Write-Verbose -Message $script:localizedData.GettingDnsServerSettings
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            DnsServer    = $DnsServer
+            DisjointNets = $null
+            LogLevel     = $null
+            IsSlave      = $null
+        }
+
+        return $targetResource
+    }
 
     $dnsServerInstance = Get-CimClassMicrosoftDnsServer -DnsServer $DnsServer
 
-    $returnValue = @{}
+    $targetResource = @{}
 
     $classProperties = @(
         'DisjointNets'
@@ -54,12 +66,12 @@ function Get-TargetResource
             $propertyName = 'NoForwarderRecursion'
         }
 
-        $returnValue.Add($propertyName, $dnsServerInstance.$property)
+        $targetResource.Add($propertyName, $dnsServerInstance.$property)
     }
 
-    $returnValue.DnsServer = $DnsServer
+    $targetResource.DnsServer = $DnsServer
 
-    return $returnValue
+    return $targetResource
 }
 
 <#

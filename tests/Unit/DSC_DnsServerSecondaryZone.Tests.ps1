@@ -60,10 +60,6 @@ AfterAll {
 }
 
 Describe 'DSC_DnsServerSecondaryZone\Get-TargetResource' -Tag 'Get' {
-    BeforeAll {
-        Mock -CommandName Assert-Module
-    }
-
     Context 'When the secondary zone exists' {
         BeforeAll {
             Mock -CommandName Get-DnsServerZone -MockWith {
@@ -90,7 +86,6 @@ Describe 'DSC_DnsServerSecondaryZone\Get-TargetResource' -Tag 'Get' {
             }
 
             Should -Invoke -CommandName Get-DnsServerZone -Times 1 -Exactly
-            Should -Invoke -CommandName Assert-Module -Times 1 -Exactly
         }
     }
 
@@ -114,18 +109,17 @@ Describe 'DSC_DnsServerSecondaryZone\Get-TargetResource' -Tag 'Get' {
             }
 
             Should -Invoke -CommandName Get-DnsServerZone -Times 1 -Exactly
-            Should -Invoke -CommandName Assert-Module -Times 1 -Exactly
         }
     }
 }
 
 Describe 'DSC_DnsServerSecondaryZone\Set-TargetResource' -Tag 'Set' {
+    BeforeAll {
+        Mock -CommandName Assert-Module
+        Mock -CommandName Test-ResourceProperties
+        Mock -CommandName Restart-Service
+    }
     Context 'When the script runs' {
-        BeforeAll {
-            Mock -CommandName Test-ResourceProperties
-            Mock -CommandName Restart-Service
-        }
-
         It 'Should call expected mocks' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
@@ -148,10 +142,6 @@ Describe 'DSC_DnsServerSecondaryZone\Set-TargetResource' -Tag 'Set' {
 }
 
 Describe 'DSC_DnsServerSecondaryZone\Test-TargetResource' -Tag 'Test' {
-    BeforeAll {
-        Mock -CommandName Assert-Module
-    }
-
     Context 'When the system is in the desired state' {
         BeforeAll {
             Mock -CommandName Test-ResourceProperties -MockWith { return $true }
@@ -172,7 +162,6 @@ Describe 'DSC_DnsServerSecondaryZone\Test-TargetResource' -Tag 'Test' {
             }
 
             Should -Invoke -CommandName Test-ResourceProperties -Times 1 -Exactly
-            Should -Invoke -CommandName Assert-Module -Times 1 -Exactly
         }
     }
 
@@ -195,7 +184,6 @@ Describe 'DSC_DnsServerSecondaryZone\Test-TargetResource' -Tag 'Test' {
             }
 
             Should -Invoke -CommandName Test-ResourceProperties -Times 1 -Exactly
-            Should -Invoke -CommandName Assert-Module -Times 1 -Exactly
         }
     }
 }

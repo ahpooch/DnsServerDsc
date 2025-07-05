@@ -61,8 +61,6 @@ AfterAll {
 
 Describe 'DSC_DnsServerRootHint\Get-TargetResource' {
     BeforeAll {
-        Mock -CommandName Assert-Module
-
         $rootHints = @(
             [PSCustomObject]  @{
                 NameServer = @{
@@ -170,8 +168,6 @@ Describe 'DSC_DnsServerRootHint\Get-TargetResource' {
 
 Describe 'DSC_DnsServerRootHint\Test-TargetResource' {
     BeforeAll {
-        Mock -CommandName Assert-Module
-
         $rootHints = @(
             [PSCustomObject]  @{
                 NameServer = @{
@@ -280,6 +276,7 @@ Describe 'DSC_DnsServerRootHint\Test-TargetResource' {
 
 Describe 'DSC_DnsServerRootHint\Set-TargetResource' {
     BeforeAll {
+        Mock -CommandName Assert-Module
         Mock -CommandName Remove-DnsServerRootHint -MockWith { }
         Mock -CommandName Add-DnsServerRootHint -MockWith { }
         Mock -CommandName Get-DnsServerRootHint -MockWith { }

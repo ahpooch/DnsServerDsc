@@ -80,14 +80,18 @@ class DnsRecordNs : DnsRecordBase
             $dnsParameters['ZoneScope'] = $this.ZoneScope
         }
 
-        $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
-            $translatedRecordName = $this.getRecordName()
-            if ($translatedRecordName -eq '.')
-            {
-                $translatedRecordName = '@'
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
+                $translatedRecordName = $this.getRecordName()
+                if ($translatedRecordName -eq '.') {
+                    $translatedRecordName = '@'
+                }
+                $_.HostName -eq $translatedRecordName -and
+                $_.RecordData.NameServer -eq "$($this.NameServer)."
             }
-            $_.HostName -eq $translatedRecordName -and
-            $_.RecordData.NameServer -eq "$($this.NameServer)."
+        } else {
+            # Returning a $null record so the resource can be used for revision purposes on systems without the DnsServer module.
+            $record = $null
         }
 
         return $record

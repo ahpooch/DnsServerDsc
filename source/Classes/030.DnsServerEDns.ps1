@@ -69,13 +69,26 @@ class DnsServerEDns : ResourceBase
             ComputerName = $properties.DnsServer
         }
 
-        $getCurrentStateResult = Get-DnsServerEDns @getParameters
+        if ($null -ne (Get-Module DnsServer -ListAvailable))
+        {
+            $getCurrentStateResult = Get-DnsServerEDns @getParameters
 
-        $state = @{
-            DnsServer       = $properties.DnsServer
-            CacheTimeout    = $getCurrentStateResult.CacheTimeout
-            EnableProbes    = $getCurrentStateResult.EnableProbes
-            EnableReception = $getCurrentStateResult.EnableReception
+            $state = @{
+                DnsServer       = $properties.DnsServer
+                CacheTimeout    = $getCurrentStateResult.CacheTimeout
+                EnableProbes    = $getCurrentStateResult.EnableProbes
+                EnableReception = $getCurrentStateResult.EnableReception
+            }
+        }
+        else
+        {
+            # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+            $state = @{
+                DnsServer       = $properties.DnsServer
+                CacheTimeout    = $null
+                EnableProbes    = $null
+                EnableReception = $null
+            }
         }
 
         return $state

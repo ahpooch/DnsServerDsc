@@ -31,15 +31,31 @@ function Get-TargetResource
 
     Write-Verbose -Message ($script:localizedData.GettingDnsZoneAgingMessage -f $Name)
 
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Name              = $Name
+            Enabled           = $Enabled
+            RefreshInterval   = $null
+            NoRefreshInterval = $null
+        }
+
+        return $targetResource
+    }
+
     # Get the current zone aging from the local DNS server
     $zoneAging = Get-DnsServerZoneAging -Name $Name
 
-    return @{
+    $targetResource = @{
         Name              = $Name
         Enabled           = $zoneAging.AgingEnabled
         RefreshInterval   = $zoneAging.RefreshInterval.TotalHours
         NoRefreshInterval = $zoneAging.NoRefreshInterval.TotalHours
     }
+
+    return $targetResource
 }
 
 <#

@@ -23,9 +23,46 @@ function Get-TargetResource
         $DnsServer
     )
 
-    Assert-Module -ModuleName 'DnsServer'
-
     Write-Verbose -Message $script:localizedData.GettingDnsServerDiagnosticsMessage
+
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            DnsServer                            = $DnsServer
+            Answers                              = $null
+            EnableLogFileRollover                = $null
+            EnableLoggingForLocalLookupEvent     = $null
+            EnableLoggingForPluginDllEvent       = $null
+            EnableLoggingForRecursiveLookupEvent = $null
+            EnableLoggingForRemoteServerEvent    = $null
+            EnableLoggingForServerStartStopEvent = $null
+            EnableLoggingForTombstoneEvent       = $null
+            EnableLoggingForZoneDataWriteEvent   = $null
+            EnableLoggingForZoneLoadingEvent     = $null
+            EnableLoggingToFile                  = $null
+            EventLogLevel                        = $null
+            FilterIPAddressList                  = $null
+            FullPackets                          = $null
+            LogFilePath                          = $null
+            MaxMBFileSize                        = $null
+            Notifications                        = $null
+            Queries                              = $null
+            QuestionTransactions                 = $null
+            ReceivePackets                       = $null
+            SaveLogsToPersistentStorage          = $null
+            SendPackets                          = $null
+            TcpPackets                           = $null
+            UdpPackets                           = $null
+            UnmatchedResponse                    = $null
+            Update                               = $null
+            UseSystemEventLog                    = $null
+            WriteThrough                         = $null
+        }
+
+        return $targetResource
+    }
 
     $getDnsServerDiagnosticsParameters = @{
         ErrorAction = 'Stop'
@@ -38,7 +75,7 @@ function Get-TargetResource
 
     $dnsServerDiagnostics = Get-DnsServerDiagnostics @getDnsServerDiagnosticsParameters
 
-    $returnValue = @{
+    $targetResource = @{
         DnsServer                            = $DnsServer
         Answers                              = $dnsServerDiagnostics.Answers
         EnableLogFileRollover                = $dnsServerDiagnostics.EnableLogFileRollover
@@ -70,7 +107,7 @@ function Get-TargetResource
         WriteThrough                         = $dnsServerDiagnostics.WriteThrough
     }
 
-    return $returnValue
+    return $targetResource
 }
 
 <#
@@ -286,6 +323,8 @@ function Set-TargetResource
         [Boolean]
         $WriteThrough
     )
+
+    Assert-Module -ModuleName 'DNSServer'
 
     $PSBoundParameters.Remove('DnsServer')
 
@@ -522,9 +561,9 @@ function Test-TargetResource
     $currentState = Get-TargetResource -DnsServer $DnsServer
 
     $params = @{
-        CurrentValues = $currentState
-        DesiredValues = $PSBoundParameters
-        ExcludeProperties = @('DnsServer')
+        CurrentValues       = $currentState
+        DesiredValues       = $PSBoundParameters
+        ExcludeProperties   = @('DnsServer')
         TurnOffTypeChecking = $true
     }
 

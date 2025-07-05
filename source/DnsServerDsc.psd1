@@ -60,6 +60,6 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = ''
-        } # End of PSData hashtable
-    } # End of PrivateData hashtable
+        }
+    }
 }

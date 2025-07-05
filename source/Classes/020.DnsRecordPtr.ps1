@@ -67,8 +67,13 @@ class DnsRecordPtr : DnsRecordBase
             Name         = $this.recordHostName
         }
 
-        $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
-            $_.RecordData.PtrDomainName -eq "$($this.Name)."
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
+                $_.RecordData.PtrDomainName -eq "$($this.Name)."
+            }
+        } else {
+            # Returning a $null record so the resource can be used for revision purposes on systems without the DnsServer module.
+            $record = $null
         }
 
         return $record

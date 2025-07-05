@@ -17,6 +17,21 @@ function Get-TargetResource
 
     Write-Verbose -Message $script:localizedData.GettingDnsForwardersMessage
 
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            IsSingleInstance = $IsSingleInstance
+            IPAddresses      = $null
+            UseRootHint      = $null
+            EnableReordering = $null
+            Timeout          = $null
+        }
+
+        return $targetResource
+    }
+
     $currentServerForwarders = Get-DnsServerForwarder
 
     $targetResource = @{

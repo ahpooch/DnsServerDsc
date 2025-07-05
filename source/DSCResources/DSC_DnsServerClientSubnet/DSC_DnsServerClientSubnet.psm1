@@ -30,25 +30,45 @@ function Get-TargetResource
     )
 
     Write-Verbose -Message ($script:localizedData.GettingDnsServerClientSubnetMessage -f $Name)
+
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Name                   = $Name
+            DynamicUpdate          = $null
+            ReplicationScope       = $null
+            DirectoryPartitionName = $null
+            Ensure                 = 'Absent'
+        }
+
+        return $targetResource
+    }
+
     $record = Get-DnsServerClientSubnet -Name $Name -ErrorAction SilentlyContinue
 
-    if ($null -eq $record)
+    $targetResource = if ($null -eq $record)
     {
-        return @{
+        @{
             Name       = $Name
             IPv4Subnet = $null
             IPv6Subnet = $null
             Ensure     = 'Absent'
         }
     }
-
-    return @{
-        Name       = $record.Name
-        IPv4Subnet = $record.IPv4Subnet
-        IPv6Subnet = $record.IPv6Subnet
-        Ensure     = 'Present'
+    else
+    {
+        @{
+            Name       = $record.Name
+            IPv4Subnet = $record.IPv4Subnet
+            IPv6Subnet = $record.IPv6Subnet
+            Ensure     = 'Present'
+        }
     }
-} #end function Get-TargetResource
+
+    return $targetResource
+}
 
 <#
     .SYNOPSIS
@@ -81,7 +101,7 @@ function Set-TargetResource
         $IPv6Subnet,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -94,24 +114,24 @@ function Set-TargetResource
     {
         if ($IPv4Subnet)
         {
-            $dnsServerClientSubnetParameters.Add('IPv4Subnet',$IPv4Subnet)
+            $dnsServerClientSubnetParameters.Add('IPv4Subnet', $IPv4Subnet)
         }
         if ($IPv6Subnet)
         {
-            $dnsServerClientSubnetParameters.Add('IPv6Subnet',$IPv6Subnet)
+            $dnsServerClientSubnetParameters.Add('IPv6Subnet', $IPv6Subnet)
         }
 
         if ($clientSubnet)
         {
-            $dnsServerClientSubnetParameters.Add('Action', "REPLACE")
+            $dnsServerClientSubnetParameters.Add('Action', 'REPLACE')
             Write-Verbose -Message ($script:localizedData.UpdatingDnsServerClientSubnetMessage -f `
-                $Name, "$IPv4Subnet", "$IPv6Subnet")
+                    $Name, "$IPv4Subnet", "$IPv6Subnet")
             Set-DnsServerClientSubnet @dnsServerClientSubnetParameters
         }
         else
         {
             Write-Verbose -Message ($script:localizedData.CreatingDnsServerClientSubnetMessage -f `
-                $Name, "$IPv4Subnet", "$IPv6Subnet")
+                    $Name, "$IPv4Subnet", "$IPv6Subnet")
             Add-DnsServerClientSubnet @dnsServerClientSubnetParameters
         }
     }
@@ -120,7 +140,7 @@ function Set-TargetResource
         Write-Verbose -Message ($script:localizedData.RemovingDnsServerClientSubnetMessage -f $Name)
         Remove-DnsServerClientSubnet -Name $Name
     }
-} #end function Set-TargetResource
+}
 
 <#
     .SYNOPSIS
@@ -154,7 +174,7 @@ function Test-TargetResource
         $IPv6Subnet,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -164,7 +184,7 @@ function Test-TargetResource
     if ($Ensure -ne $result.Ensure)
     {
         Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-            'Ensure', $Ensure, $result.Ensure)
+                'Ensure', $Ensure, $result.Ensure)
         Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
         return $false
     }
@@ -176,7 +196,7 @@ function Test-TargetResource
         if (($null -eq $IPv4Subnet) -and ($null -ne $IPv4SubnetResult))
         {
             Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-                'IPv4Subnet', "$IPv4Subnet", "$IPv4SubnetResult")
+                    'IPv4Subnet', "$IPv4Subnet", "$IPv4SubnetResult")
             Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
             return $false
         }
@@ -184,7 +204,7 @@ function Test-TargetResource
         if (($null -eq $IPv4SubnetResult) -and ($null -ne $IPv4Subnet))
         {
             Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-                'IPv4Subnet', "$IPv4Subnet", "$IPv4SubnetResult")
+                    'IPv4Subnet', "$IPv4Subnet", "$IPv4SubnetResult")
             Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
             return $false
         }
@@ -195,7 +215,7 @@ function Test-TargetResource
             if ($IPv4Difference)
             {
                 Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-                    'IPv4Subnet', "$IPv4Subnet", "$IPv4SubnetResult")
+                        'IPv4Subnet', "$IPv4Subnet", "$IPv4SubnetResult")
                 Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
                 return $false
             }
@@ -204,7 +224,7 @@ function Test-TargetResource
         if (($null -eq $IPv6Subnet) -and ($null -ne $IPv6SubnetResult))
         {
             Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-                'IPv6Subnet', "$IPv6Subnet", "$IPv6SubnetResult")
+                    'IPv6Subnet', "$IPv6Subnet", "$IPv6SubnetResult")
             Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
             return $false
         }
@@ -212,7 +232,7 @@ function Test-TargetResource
         if (($null -eq $IPv6SubnetResult) -and ($null -ne $IPv6Subnet))
         {
             Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-                'IPv6Subnet', "$IPv6Subnet", "$IPv6SubnetResult")
+                    'IPv6Subnet', "$IPv6Subnet", "$IPv6SubnetResult")
             Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
             return $false
         }
@@ -223,7 +243,7 @@ function Test-TargetResource
             if ($IPv6Difference)
             {
                 Write-Verbose -Message ($script:localizedData.NotDesiredPropertyMessage -f `
-                    'IPv6Subnet', "$IPv6Subnet", "$IPv6SubnetResult")
+                        'IPv6Subnet', "$IPv6Subnet", "$IPv6SubnetResult")
                 Write-Verbose -Message ($script:localizedData.NotInDesiredStateMessage -f $Name)
                 return $false
             }
@@ -231,4 +251,4 @@ function Test-TargetResource
     }
     Write-Verbose -Message ($script:localizedData.InDesiredStateMessage -f $Name)
     return $true
-} #end function Test-TargetResource
+}

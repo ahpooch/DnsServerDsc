@@ -61,8 +61,6 @@ AfterAll {
 
 Describe 'DSC_DnsServerPrimaryZone\Get-TargetResource' -Tag 'Get' {
     BeforeAll {
-        Mock -CommandName Assert-Module
-
         $testZoneName = 'example.com'
         $testZoneFile = 'example.com.dns'
         $testDynamicUpdate = 'None'
@@ -170,8 +168,6 @@ Describe 'DSC_DnsServerPrimaryZone\Get-TargetResource' -Tag 'Get' {
 
 Describe 'DSC_DnsServerPrimaryZone\Test-TargetResource' -Tag 'Test' {
     BeforeAll {
-        Mock -CommandName Assert-Module
-
         $testZoneName = 'example.com'
         $testZoneFile = 'example.com.dns'
         $testDynamicUpdate = 'None'
@@ -319,7 +315,7 @@ Describe 'DSC_DnsServerPrimaryZone\Test-TargetResource' -Tag 'Test' {
 
 Describe 'DSC_DnsServerPrimaryZone\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
-        Mock -CommandName 'Assert-Module'
+        Mock -CommandName Assert-Module
 
         $testZoneName = 'example.com'
         $testZoneFile = 'example.com.dns'

@@ -31,25 +31,44 @@ function Get-TargetResource
     )
 
     Write-Verbose -Message ($script:localizedData.GettingDnsServerZoneScopeMessage -f $Name, $ZoneName)
+
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            Name     = $Name
+            ZoneName = $ZoneName
+            ZoneFile = $null
+            Ensure   = 'Absent'
+        }
+
+        return $targetResource
+    }
+
     $record = Get-DnsServerZoneScope -Name $Name -ZoneName $ZoneName -ErrorAction SilentlyContinue
 
-    if ($null -eq $record)
+    $targetResource = if ($null -eq $record)
     {
-        return @{
+        @{
             Name     = $Name
             ZoneName = $ZoneName
             ZoneFile = $null
             Ensure   = 'Absent'
         }
     }
-
-    return @{
-        Name     = $record.ZoneScope
-        ZoneName = $record.ZoneName
-        ZoneFile = $record.FileName
-        Ensure   = 'Present'
+    else
+    {
+        @{
+            Name     = $record.ZoneScope
+            ZoneName = $record.ZoneName
+            ZoneFile = $record.FileName
+            Ensure   = 'Present'
+        }
     }
-} #end function Get-TargetResource
+
+    return $targetResource
+}
 
 <#
     .SYNOPSIS
@@ -75,7 +94,7 @@ function Set-TargetResource
         $ZoneName,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -94,7 +113,7 @@ function Set-TargetResource
         Write-Verbose -Message ($script:localizedData.RemovingDnsServerZoneScopeMessage -f $Name, $ZoneName)
         Remove-DnsServerZoneScope -Name $Name -ZoneName $ZoneName
     }
-} #end function Set-TargetResource
+}
 
 <#
     .SYNOPSIS
@@ -121,7 +140,7 @@ function Test-TargetResource
         $ZoneName,
 
         [Parameter()]
-        [ValidateSet('Present','Absent')]
+        [ValidateSet('Present', 'Absent')]
         [System.String]
         $Ensure = 'Present'
     )
@@ -137,4 +156,4 @@ function Test-TargetResource
 
     Write-Verbose -Message ($script:localizedData.InDesiredStateMessage -f $Name)
     return $true
-} #end function Test-TargetResource
+}

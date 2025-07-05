@@ -104,15 +104,27 @@ class DnsServerScavenging : ResourceBase
             ComputerName = $properties.DnsServer
         }
 
-        $getCurrentStateResult = Get-DnsServerScavenging @getParameters
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $getCurrentStateResult = Get-DnsServerScavenging @getParameters
 
-        $state = @{
-            DnsServer          = $properties.DnsServer
-            ScavengingState    = $getCurrentStateResult.ScavengingState
-            ScavengingInterval = $getCurrentStateResult.ScavengingInterval
-            RefreshInterval    = $getCurrentStateResult.RefreshInterval
-            NoRefreshInterval  = $getCurrentStateResult.NoRefreshInterval
-            LastScavengeTime   = $getCurrentStateResult.LastScavengeTime
+            $state = @{
+                DnsServer          = $properties.DnsServer
+                ScavengingState    = $getCurrentStateResult.ScavengingState
+                ScavengingInterval = $getCurrentStateResult.ScavengingInterval
+                RefreshInterval    = $getCurrentStateResult.RefreshInterval
+                NoRefreshInterval  = $getCurrentStateResult.NoRefreshInterval
+                LastScavengeTime   = $getCurrentStateResult.LastScavengeTime
+            }
+        } else {
+            # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+            $state = @{
+                DnsServer          = $properties.DnsServer
+                ScavengingState    = $null
+                ScavengingInterval = $null
+                RefreshInterval    = $null
+                NoRefreshInterval  = $null
+                LastScavengeTime   = $null
+            }
         }
 
         return $state

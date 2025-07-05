@@ -58,8 +58,13 @@ class DnsRecordCname : DnsRecordBase
             $dnsParameters['ZoneScope'] = $this.ZoneScope
         }
 
-        $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
-            $_.RecordData.HostNameAlias -eq "$($this.HostnameAlias)."
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
+                $_.RecordData.HostNameAlias -eq "$($this.HostnameAlias)."
+            }
+        } else {
+            # Returning a $null record so the resource can be used for revision purposes on systems without the DnsServer module.
+            $record = $null
         }
 
         return $record

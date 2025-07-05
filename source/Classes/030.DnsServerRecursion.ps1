@@ -105,14 +105,28 @@ class DnsServerRecursion : ResourceBase
             ComputerName = $properties.DnsServer
         }
 
-        $getCurrentStateResult = Get-DnsServerRecursion @getParameters
+        if ($null -ne (Get-Module DnsServer -ListAvailable))
+        {
+            $getCurrentStateResult = Get-DnsServerRecursion @getParameters
 
-        $state = @{
-            DnsServer         = $properties.DnsServer
-            Enable            = $getCurrentStateResult.Enable
-            AdditionalTimeout = [System.UInt32] $getCurrentStateResult.AdditionalTimeout
-            RetryInterval     = [System.UInt32] $getCurrentStateResult.RetryInterval
-            Timeout           = [System.UInt32] $getCurrentStateResult.Timeout
+            $state = @{
+                DnsServer         = $properties.DnsServer
+                Enable            = $getCurrentStateResult.Enable
+                AdditionalTimeout = [System.UInt32] $getCurrentStateResult.AdditionalTimeout
+                RetryInterval     = [System.UInt32] $getCurrentStateResult.RetryInterval
+                Timeout           = [System.UInt32] $getCurrentStateResult.Timeout
+            }
+        }
+        else
+        {
+            # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+            $state = @{
+                DnsServer         = $properties.DnsServer
+                Enable            = $null
+                AdditionalTimeout = $null
+                RetryInterval     = $null
+                Timeout           = $null
+            }
         }
 
         return $state

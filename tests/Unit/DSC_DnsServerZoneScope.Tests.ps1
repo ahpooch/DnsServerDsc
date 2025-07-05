@@ -180,6 +180,8 @@ Describe 'DSC_DnsServerZoneScope\Test-TargetResource' -Tag 'Test' {
 
 Describe 'DSC_DnsServerZoneScope\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
+        Mock -CommandName Assert-Module
+
         $ZoneScopePresent = {
             [PSCustomObject]@{
                 ZoneName  = 'contoso.com'

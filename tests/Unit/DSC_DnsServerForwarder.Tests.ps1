@@ -370,6 +370,7 @@ Describe 'DSC_DnsServerForwarder\Test-TargetResource' -Tag 'Test' {
 
 Describe 'DSC_DnsServerForwarder\Set-TargetResource' -Tag 'Set' {
     BeforeAll {
+        Mock -CommandName Assert-Module
         InModuleScope -ScriptBlock {
             Set-StrictMode -Version 1.0
 

@@ -140,16 +140,32 @@ class DnsServerDsSetting : ResourceBase
             ComputerName = $properties.DnsServer
         }
 
-        $getCurrentStateResult = Get-DnsServerDsSetting @getParameters
+        if ($null -ne (Get-Module DnsServer -ListAvailable))
+        {
+            $getCurrentStateResult = Get-DnsServerDsSetting @getParameters
 
-        $state = @{
-            DnsServer                            = $properties.DnsServer
-            DirectoryPartitionAutoEnlistInterval = $getCurrentStateResult.DirectoryPartitionAutoEnlistInterval
-            LazyUpdateInterval                   = [System.UInt32] $getCurrentStateResult.LazyUpdateInterval
-            MinimumBackgroundLoadThreads         = [System.UInt32] $getCurrentStateResult.MinimumBackgroundLoadThreads
-            PollingInterval                      = $getCurrentStateResult.PollingInterval
-            RemoteReplicationDelay               = [System.UInt32] $getCurrentStateResult.RemoteReplicationDelay
-            TombstoneInterval                    = $getCurrentStateResult.TombstoneInterval
+            $state = @{
+                DnsServer                            = $properties.DnsServer
+                DirectoryPartitionAutoEnlistInterval = $getCurrentStateResult.DirectoryPartitionAutoEnlistInterval
+                LazyUpdateInterval                   = [System.UInt32] $getCurrentStateResult.LazyUpdateInterval
+                MinimumBackgroundLoadThreads         = [System.UInt32] $getCurrentStateResult.MinimumBackgroundLoadThreads
+                PollingInterval                      = $getCurrentStateResult.PollingInterval
+                RemoteReplicationDelay               = [System.UInt32] $getCurrentStateResult.RemoteReplicationDelay
+                TombstoneInterval                    = $getCurrentStateResult.TombstoneInterval
+            }
+        }
+        else
+        {
+            # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+            $state = @{
+                DnsServer                            = $properties.DnsServer
+                DirectoryPartitionAutoEnlistInterval = $null
+                LazyUpdateInterval                   = $null
+                MinimumBackgroundLoadThreads         = $null
+                PollingInterval                      = $null
+                RemoteReplicationDelay               = $null
+                TombstoneInterval                    = $null
+            }
         }
 
         return $state

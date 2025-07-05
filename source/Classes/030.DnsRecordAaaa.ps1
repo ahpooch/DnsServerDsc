@@ -58,8 +58,13 @@ class DnsRecordAaaa : DnsRecordBase
             $dnsParameters['ZoneScope'] = $this.ZoneScope
         }
 
-        $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
-            $_.RecordData.IPv6Address -eq $this.IPv6Address
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
+                $_.RecordData.IPv6Address -eq $this.IPv6Address
+            }
+        } else {
+            # Returning a $null record so the resource can be used for revision purposes on systems without the DnsServer module.
+            $record = $null
         }
 
         return $record

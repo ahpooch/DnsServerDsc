@@ -29,17 +29,28 @@ function Get-TargetResource
         $NameServer
     )
 
-    Assert-Module -ModuleName 'DNSServer'
-
     Write-Verbose -Message $script:localizedData.GettingCurrentRootHintsMessage
 
-    $result = @{
+    if (-not (Test-ModuleExist -Name 'DNSServer'))
+    {
+        Write-Warning -Message 'DNS module is not installed and resource could be used for revision purposes only.'
+        # Returning a mostly $null-filled hashtable so the resource can be used for revision purposes on systems without the DnsServer module.
+        $targetResource = @{
+            IsSingleInstance = 'Yes'
+            NameServer       = $null
+        }
+
+        return $targetResource
+    }
+
+    $targetResource = @{
         IsSingleInstance = 'Yes'
         NameServer       = Convert-RootHintsToHashtable -RootHints @(Get-DnsServerRootHint)
     }
 
-    Write-Verbose -Message ($script:localizedData.FoundRootHintsMessage -f $result.NameServer.Count)
-    $result
+    Write-Verbose -Message ($script:localizedData.FoundRootHintsMessage -f $targetResource.NameServer.Count)
+
+    return $targetResource
 }
 
 <#
@@ -117,10 +128,10 @@ function Test-TargetResource
     }
 
     $params = @{
-        CurrentValues = $currentState
-        DesiredValues = $desiredState
+        CurrentValues       = $currentState
+        DesiredValues       = $desiredState
         TurnOffTypeChecking = $true
-        ReverseCheck = $true
+        ReverseCheck        = $true
     }
 
     $result = Test-DscParameterState @params
@@ -153,7 +164,7 @@ function Convert-RootHintsToHashtable
         $RootHints
     )
 
-    $r = @{ }
+    $RootHintsHashTable = @{ }
 
     foreach ($rootHint in $RootHints)
     {
@@ -171,8 +182,8 @@ function Convert-RootHintsToHashtable
             $rootHint.IPAddress.RecordData.IPv6Address.IPAddressToString -join ','
         }
 
-        $r.Add($rootHint.NameServer.RecordData.NameServer, $ip)
+        $RootHintsHashTable.Add($rootHint.NameServer.RecordData.NameServer, $ip)
     }
 
-    return $r
+    return $RootHintsHashTable
 }

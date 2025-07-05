@@ -100,10 +100,15 @@ class DnsRecordSrv : DnsRecordBase
             $dnsParameters['ZoneScope'] = $this.ZoneScope
         }
 
-        $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
-            $_.HostName -eq $recordHostName -and
-            $_.RecordData.Port -eq $this.Port -and
-            $_.RecordData.DomainName -eq "$($this.Target)."
+        if ($null -ne (Get-Module DnsServer -ListAvailable)) {
+            $record = Get-DnsServerResourceRecord @dnsParameters -ErrorAction SilentlyContinue | Where-Object -FilterScript {
+                $_.HostName -eq $recordHostName -and
+                $_.RecordData.Port -eq $this.Port -and
+                $_.RecordData.DomainName -eq "$($this.Target)."
+            }
+        } else {
+            # Returning a $null record so the resource can be used for revision purposes on systems without the DnsServer module.
+            $record = $null
         }
 
         return $record

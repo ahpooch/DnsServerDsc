@@ -61,7 +61,6 @@ AfterAll {
 
 Describe 'DSC_DnsServerSetting\Get-TargetResource' -Tag 'Get' {
     BeforeAll {
-        Mock -CommandName Assert-Module
         Mock -CommandName Get-DnsServerSetting -MockWith {
             return @{
                 DnsServer                               = 'dns1.company.local'
@@ -244,10 +243,6 @@ Describe 'DSC_DnsServerSetting\Get-TargetResource' -Tag 'Get' {
 }
 
 Describe 'DSC_DnsServerSetting\Test-TargetResource' -Tag 'Test' {
-    BeforeAll {
-        Mock -CommandName Assert-Module
-    }
-
     Context 'When the system is not in the desired state' {
         BeforeAll {
             Mock -CommandName Get-TargetResource -MockWith {
