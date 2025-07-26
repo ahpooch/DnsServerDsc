@@ -1,6 +1,6 @@
 <#
     .SYNOPSIS
-        Unit test for DSC_DnsRecordSrv DSC resource.
+        Unit test for DSC_DnsRecordPtr DSC resource.
 #>
 
 # Suppressing this rule because Script Analyzer does not understand Pester's syntax.
@@ -53,13 +53,13 @@ AfterAll {
     Remove-Module -Name DnsServer -Force
 }
 
-Describe DnsRecordSrv -Tag 'DnsRecord', 'DnsRecordSrv' {
+Describe DnsRecordPtr -Tag 'DnsRecord', 'DnsRecordPtr' {
     Context 'Constructors' {
-        It 'Should not throw an exception when instanciate it' {
+        It 'Should not throw an exception when instantiated' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
-                { [DnsRecordSrv]::new() } | Should -Not -Throw
+                { [DnsRecordPtr]::new() } | Should -Not -Throw
             }
         }
 
@@ -67,36 +67,33 @@ Describe DnsRecordSrv -Tag 'DnsRecord', 'DnsRecordSrv' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
-                $instance = [DnsRecordSrv]::new()
+                $instance = [DnsRecordPtr]::new()
                 $instance | Should -Not -BeNullOrEmpty
-                $instance.GetType().Name | Should -Be 'DnsRecordSrv'
             }
         }
     }
 
     Context 'Type creation' {
-        It 'Should be type named DnsRecordSrv' {
+        It 'Should be type named DnsRecordPtr' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
-                $instance = [DnsRecordSrv]::new()
-                $instance.GetType().Name | Should -Be 'DnsRecordSrv'
+                $instance = [DnsRecordPtr]::new()
+                $instance.GetType().Name | Should -Be 'DnsRecordPtr'
             }
         }
     }
 }
 
-Describe 'Testing Get Method' -Tag 'Get', 'DnsRecord', 'DnsRecordSrv' {
+Describe 'Testing DnsRecordPtr Get Method' -Tag 'Get', 'DnsRecord', 'DnsRecordPtr' {
     BeforeEach {
         InModuleScope -ScriptBlock {
             Set-StrictMode -Version 1.0
 
-            $script:instanceDesiredState = [DnsRecordSrv] @{
-                ZoneName     = 'contoso.com'
-                SymbolicName = 'xmpp'
-                Protocol     = 'TCP'
-                Port         = 5222
-                Target       = 'chat.contoso.com'
+            $script:instanceDesiredState = [DnsRecordPtr] @{
+                ZoneName  = '0.168.192.in-addr.arpa'
+                IpAddress = '192.168.0.9'
+                Name      = 'quarks.contoso.com'
             }
         }
     }
@@ -104,8 +101,9 @@ Describe 'Testing Get Method' -Tag 'Get', 'DnsRecord', 'DnsRecordSrv' {
     Context 'When the configuration is absent' {
         BeforeAll {
             Mock -CommandName Get-DnsServerResourceRecord -MockWith {
-                Write-Verbose 'Mock Get-DnsServerResourceRecord Called' -Verbose
+                Write-Verbose -Message 'Mock Get-DnsServerResourceRecord Called' -Verbose
             }
+            Mock -CommandName Assert-IPAddress
         }
 
         It 'Should return the state as absent' {
@@ -117,31 +115,31 @@ Describe 'Testing Get Method' -Tag 'Get', 'DnsRecord', 'DnsRecordSrv' {
                 $currentState.Ensure | Should -Be 'Absent'
             }
 
-            Should -Invoke Get-DnsServerResourceRecord -Exactly -Times 1 -Scope It
+            Should -Invoke -CommandName Assert-IPAddress -Exactly -Times 1 -Scope It
+            Should -Invoke -CommandName Get-DnsServerResourceRecord -Exactly -Times 1 -Scope It
         }
 
-        It 'Should return the same values as present in properties' {
+        It 'Should return the same values as present in Key properties' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
                 $getMethodResourceResult = $script:instanceDesiredState.Get()
 
                 $getMethodResourceResult.ZoneName | Should -Be $script:instanceDesiredState.ZoneName
-                $getMethodResourceResult.SymbolicName | Should -Be $script:instanceDesiredState.SymbolicName
-                $getMethodResourceResult.Protocol | Should -Be $script:instanceDesiredState.Protocol
-                $getMethodResourceResult.Port | Should -Be $script:instanceDesiredState.Port
-                $getMethodResourceResult.Target | Should -Be $script:instanceDesiredState.Target
+                $getMethodResourceResult.IpAddress | Should -Be $script:instanceDesiredState.IpAddress
+                $getMethodResourceResult.Name | Should -Be $script:instanceDesiredState.Name
             }
+
+            Should -Invoke -CommandName Assert-IPAddress -Exactly -Times 1 -Scope It
+            Should -Invoke -CommandName Get-DnsServerResourceRecord -Exactly -Times 1 -Scope It
         }
 
-        It 'Should return $false or $null respectively for the rest of the properties' {
+        It 'Should return $false or $null respectively for the rest of the non-key properties' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
                 $getMethodResourceResult = $script:instanceDesiredState.Get()
 
-                $getMethodResourceResult.Weight | Should -Be 0
-                $getMethodResourceResult.Priority | Should -Be 0
                 $getMethodResourceResult.TimeToLive | Should -BeNullOrEmpty
                 $getMethodResourceResult.DnsServer | Should -Be 'localhost'
             }
@@ -153,10 +151,10 @@ Describe 'Testing Get Method' -Tag 'Get', 'DnsRecord', 'DnsRecordSrv' {
             $mockInstancesPath = Resolve-Path -Path $PSScriptRoot
 
             Mock -CommandName Get-DnsServerResourceRecord -MockWith {
-                Write-Verbose 'Mock Get-DnsServerResourceRecord Called' -Verbose
-
-                return Import-Clixml -Path "$($mockInstancesPath)\..\MockObjects\SrvRecordInstance.xml"
+                Write-Verbose -Message 'Mock Get-DnsServerResourceRecord Called' -Verbose
+                return Import-Clixml -Path "$($mockInstancesPath)\..\MockObjects\PtrRecordInstance.xml"
             }
+            Mock -CommandName Assert-IPAddress
         }
 
         It 'Should return the state as present' {
@@ -164,52 +162,49 @@ Describe 'Testing Get Method' -Tag 'Get', 'DnsRecord', 'DnsRecordSrv' {
                 Set-StrictMode -Version 1.0
 
                 $currentState = $script:instanceDesiredState.Get()
-
                 $currentState.Ensure | Should -Be 'Present'
             }
 
-            Should -Invoke Get-DnsServerResourceRecord -Exactly -Times 1 -Scope It
+            Should -Invoke -CommandName Assert-IPAddress -Exactly -Times 1 -Scope It
+            Should -Invoke -CommandName Get-DnsServerResourceRecord -Exactly -Times 1 -Scope It
         }
 
-        It 'Should return the same values as present in properties' {
+        It 'Should return the same values as present in Key properties' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
                 $getMethodResourceResult = $script:instanceDesiredState.Get()
 
+                $getMethodResourceResult.IpAddress | Should -Be $script:instanceDesiredState.IpAddress
                 $getMethodResourceResult.Name | Should -Be $script:instanceDesiredState.Name
-                $getMethodResourceResult.PropertyMandatory | Should -Be $script:instanceDesiredState.PropertyMandatory
             }
+
+            Should -Invoke -CommandName Assert-IPAddress -Exactly -Times 1 -Scope It
         }
     }
 }
 
-Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
+Describe 'Testing DnsRecordPtr Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordPtr' {
     Context 'When the system is in the desired state' {
         Context 'When the configuration are absent' {
             BeforeEach {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
-                    $script:instanceDesiredState = [DnsRecordSrv] @{
-                        ZoneName     = 'contoso.com'
-                        SymbolicName = 'xmpp'
-                        Protocol     = 'TCP'
-                        Port         = 5222
-                        Target       = 'chat.contoso.com'
-                        Ensure       = [Ensure]::Absent
+                    $script:instanceDesiredState = [DnsRecordPtr] @{
+                        ZoneName  = '0.168.192.in-addr.arpa'
+                        IpAddress = '192.168.0.9'
+                        Name      = 'quarks.contoso.com'
+                        Ensure    = [Ensure]::Absent
                     }
 
                     #Override Get() method
-                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get `
-                        -Value {
-                        $mockInstanceCurrentState = [DnsRecordSrv] @{
-                            ZoneName     = 'contoso.com'
-                            SymbolicName = 'xmpp'
-                            Protocol     = 'TCP'
-                            Port         = 5222
-                            Target       = 'chat.contoso.com'
-                            Ensure       = [Ensure]::Absent
+                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get -Value {
+                        $mockInstanceCurrentState = [DnsRecordPtr] @{
+                            ZoneName  = '0.168.192.in-addr.arpa'
+                            IpAddress = '192.168.0.9'
+                            Name      = 'quarks.contoso.com'
+                            Ensure    = [Ensure]::Absent
                         }
 
                         return $mockInstanceCurrentState
@@ -230,24 +225,18 @@ Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
             BeforeEach {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
-
-                    $script:instanceDesiredState = [DnsRecordSrv] @{
-                        ZoneName     = 'contoso.com'
-                        SymbolicName = 'xmpp'
-                        Protocol     = 'TCP'
-                        Port         = 5222
-                        Target       = 'chat.contoso.com'
+                    $script:instanceDesiredState = [DnsRecordPtr] @{
+                        ZoneName  = '0.168.192.in-addr.arpa'
+                        IpAddress = '192.168.0.9'
+                        Name      = 'quarks.contoso.com'
                     }
 
-                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get `
-                        -Value {
-                        $mockInstanceCurrentState = [DnsRecordSrv] @{
-                            ZoneName     = 'contoso.com'
-                            SymbolicName = 'xmpp'
-                            Protocol     = 'TCP'
-                            Port         = 5222
-                            Target       = 'chat.contoso.com'
-                            Ensure       = 'Present'
+                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get -Value {
+                        $mockInstanceCurrentState = [DnsRecordPtr] @{
+                            ZoneName  = '0.168.192.in-addr.arpa'
+                            IpAddress = '192.168.0.9'
+                            Name      = 'quarks.contoso.com'
+                            Ensure    = [Ensure]::Present
                         }
 
                         return $mockInstanceCurrentState
@@ -271,25 +260,20 @@ Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
-                    $script:instanceDesiredState = [DnsRecordSrv] @{
-                        ZoneName     = 'contoso.com'
-                        SymbolicName = 'xmpp'
-                        Protocol     = 'TCP'
-                        Port         = 5222
-                        Target       = 'chat.contoso.com'
-                        Ensure       = [Ensure]::Absent
+                    $script:instanceDesiredState = [DnsRecordPtr] @{
+                        ZoneName  = '0.168.192.in-addr.arpa'
+                        IpAddress = '192.168.0.9'
+                        Name      = 'quarks.contoso.com'
+                        Ensure    = [Ensure]::Absent
                     }
 
                     #Override Get() method
-                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get `
-                        -Value {
-                        $mockInstanceCurrentState = [DnsRecordSrv] @{
-                            ZoneName     = 'contoso.com'
-                            SymbolicName = 'xmpp'
-                            Protocol     = 'TCP'
-                            Port         = 5222
-                            Target       = 'chat.contoso.com'
-                            Ensure       = [Ensure]::Present
+                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get -Value {
+                        $mockInstanceCurrentState = [DnsRecordPtr] @{
+                            ZoneName  = '0.168.192.in-addr.arpa'
+                            IpAddress = '192.168.0.9'
+                            Name      = 'quarks.contoso.com'
+                            Ensure    = [Ensure]::Present
                         }
 
                         return $mockInstanceCurrentState
@@ -311,56 +295,25 @@ Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
-                    $script:instanceDesiredState = [DnsRecordSrv] @{
-                        ZoneName     = 'contoso.com'
-                        SymbolicName = 'xmpp'
-                        Protocol     = 'TCP'
-                        Port         = 5222
-                        Target       = 'chat.contoso.com'
-                        Priority     = 20
-                        Weight       = 30
-                        TimeToLive   = '1:00:00'
-                        Ensure       = [Ensure]::Present
+                    $script:instanceDesiredState = [DnsRecordPtr] @{
+                        ZoneName   = '0.168.192.in-addr.arpa'
+                        IpAddress  = '192.168.0.9'
+                        Name       = 'quarks.contoso.com'
+                        TimeToLive = '1:00:00'
+                        Ensure     = [Ensure]::Present
                     }
                 }
             }
+
             BeforeDiscovery {
                 $testCasesToFail = @(
                     @{
-                        SymbolicName = 'xmpp'
-                        ZoneName     = 'contoso.com'
-                        Ensure       = 'Present'
-                        Target       = 'chat.contoso.com'
-                        DnsServer    = 'localhost'
-                        Port         = 5222
-                        Protocol     = 'TCP'
-                        Priority     = 30 # Incorrect
-                        Weight       = 30
-                        TimeToLive   = '01:00:00'
-                    },
-                    @{
-                        SymbolicName = 'xmpp'
-                        ZoneName     = 'contoso.com'
-                        Ensure       = 'Present'
-                        Target       = 'chat.contoso.com'
-                        DnsServer    = 'localhost'
-                        Port         = 5222
-                        Protocol     = 'TCP'
-                        Priority     = 20
-                        Weight       = 40 # Incorrect
-                        TimeToLive   = '01:00:00'
-                    },
-                    @{
-                        SymbolicName = 'xmpp'
-                        ZoneName     = 'contoso.com'
-                        Ensure       = 'Present'
-                        Target       = 'chat.contoso.com'
-                        DnsServer    = 'localhost'
-                        Port         = 5222
-                        Protocol     = 'TCP'
-                        Priority     = 20
-                        Weight       = 30
-                        TimeToLive   = '02:00:00' # Incorrect
+                        ZoneName   = '0.168.192.in-addr.arpa'
+                        IpAddress  = '192.168.0.9'
+                        Name       = 'quarks.contoso.com'
+                        DnsServer  = 'localhost'
+                        TimeToLive = '02:00:00' # Undesired
+                        Ensure     = 'Present'
                     }
                 )
             }
@@ -368,17 +321,13 @@ Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
             It 'Should return $false when the object is not found' {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
-
                     #Override Get() method
-                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get `
-                        -Value {
-                        $mockInstanceCurrentState = [DnsRecordSrv] @{
-                            ZoneName     = 'contoso.com'
-                            SymbolicName = 'xmpp'
-                            Protocol     = 'TCP'
-                            Port         = 5222
-                            Target       = 'chat.contoso.com'
-                            Ensure       = [Ensure]::Absent
+                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get -Value {
+                        $mockInstanceCurrentState = [DnsRecordPtr] @{
+                            ZoneName  = '0.168.192.in-addr.arpa'
+                            IpAddress = '192.168.0.9'
+                            Name      = 'quarks.contoso.com'
+                            Ensure    = [Ensure]::Absent
                         }
 
                         return $mockInstanceCurrentState
@@ -387,23 +336,17 @@ Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
                 }
             }
 
-            It 'Should return $false when Priority is <Priority>, Weight is <Weight>, and TimeToLive is <TimeToLive>' -TestCases $testCasesToFail {
+            It 'Should return $false when non-key values are not in the desired state.' -TestCases $testCasesToFail {
                 InModuleScope -Parameters $_ -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
                     #Override Get() method
-                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get `
-                        -Value {
-                        $mockInstanceCurrentState = [DnsRecordSrv] @{
-                            ZoneName     = $ZoneName
-                            SymbolicName = $SymbolicName
-                            Protocol     = $Protocol
-                            Port         = $Port
-                            Target       = $Target
-                            Priority     = $Priority
-                            Weight       = $Weight
-                            TimeToLive   = $TimeToLive
-                            Ensure       = [Ensure]::Present
+                    $script:instanceDesiredState | Add-Member -Force -MemberType ScriptMethod -Name Get -Value {
+                        $mockInstanceCurrentState = [DnsRecordPtr] @{
+                            ZoneName  = $ZoneName
+                            IpAddress = $IpAddress
+                            Name      = $Name
+                            Ensure    = [Ensure]::Present
                         }
 
                         return $mockInstanceCurrentState
@@ -416,20 +359,20 @@ Describe 'Testing Test Method' -Tag 'Test', 'DnsRecord', 'DnsRecordSrv' {
     }
 }
 
-Describe 'Testing Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordSrv' {
+Describe 'Testing DnsRecordPtr Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordPtr' {
     BeforeAll {
         # Mock the Add-DnsServerResourceRecord cmdlet to return nothing
         Mock -CommandName Add-DnsServerResourceRecord -MockWith {
-            Write-Verbose 'Mock Add-DnsServerResourceRecord Called' -Verbose
+            Write-Verbose -Message 'Mock Add-DnsServerResourceRecord Called' -Verbose
         } -Verifiable
 
         # Mock the Remove-DnsServerResourceRecord cmdlet to return nothing
         Mock -CommandName Remove-DnsServerResourceRecord -MockWith {
-            Write-Verbose 'Mock Remove-DnsServerResourceRecord Called' -Verbose
+            Write-Verbose -Message 'Mock Remove-DnsServerResourceRecord Called' -Verbose
         } -Verifiable
 
         Mock -CommandName Set-DnsServerResourceRecord -MockWith {
-            Write-Verbose 'Mock Set-DnsServerResourceRecord Called' -Verbose
+            Write-Verbose -Message 'Mock Set-DnsServerResourceRecord Called' -Verbose
         } -Verifiable
     }
 
@@ -438,13 +381,12 @@ Describe 'Testing Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordSrv' {
             $mockInstancesPath = Resolve-Path -Path $PSScriptRoot
 
             Mock -CommandName Get-DnsServerResourceRecord -MockWith {
-                Write-Verbose 'Mock Get-DnsServerResourceRecord Called' -Verbose
+                Write-Verbose -Message 'Mock Get-DnsServerResourceRecord Called' -Verbose
 
-                $mockRecord = Import-Clixml -Path "$($mockInstancesPath)\..\MockObjects\SrvRecordInstance.xml"
+                $mockRecord = Import-Clixml -Path "$($mockInstancesPath)\..\MockObjects\PtrRecordInstance.xml"
 
                 # Set a wrong value
-                $mockRecord.RecordData.Priority = 300
-                $mockRecord.RecordData.Weight = 400
+                $mockRecord.TimeToLive = [System.TimeSpan] '2:00:00'
 
                 return $mockRecord
             }
@@ -455,15 +397,11 @@ Describe 'Testing Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordSrv' {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
-                    $script:instanceDesiredState = [DnsRecordSrv] @{
-                        ZoneName     = 'contoso.com'
-                        SymbolicName = 'xmpp'
-                        Protocol     = 'TCP'
-                        Port         = 5222
-                        Target       = 'chat.contoso.com'
-                        Priority     = 0
-                        Weight       = 0
-                        Ensure       = [Ensure]::Absent
+                    $script:instanceDesiredState = [DnsRecordPtr] @{
+                        ZoneName  = '0.168.192.in-addr.arpa'
+                        IpAddress = '192.168.0.9'
+                        Name      = 'quarks.contoso.com'
+                        Ensure    = [Ensure]::Absent
                     }
                 }
             }
@@ -493,16 +431,12 @@ Describe 'Testing Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordSrv' {
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
-                    $script:instanceDesiredState = [DnsRecordSrv] @{
-                        ZoneName     = 'contoso.com'
-                        SymbolicName = 'xmpp'
-                        Protocol     = 'TCP'
-                        Port         = 5222
-                        Target       = 'chat.contoso.com'
-                        Priority     = 20
-                        Weight       = 30
-                        TimeToLive   = '1:00:00'
-                        Ensure       = [Ensure]::Present
+                    $script:instanceDesiredState = [DnsRecordPtr] @{
+                        ZoneName   = '0.168.192.in-addr.arpa'
+                        IpAddress  = '192.168.0.9'
+                        Name       = 'quarks.contoso.com'
+                        TimeToLive = '1:00:00'
+                        Ensure     = [Ensure]::Present
                     }
                 }
             }
@@ -527,11 +461,10 @@ Describe 'Testing Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordSrv' {
 
             It 'Should call the correct mocks when record does not exist' {
                 Mock -CommandName Get-DnsServerResourceRecord -MockWith {
-                    Write-Verbose 'Mock Get-DnsServerResourceRecord Called' -Verbose
+                    Write-Verbose -Message 'Mock Get-DnsServerResourceRecord Called' -Verbose
 
                     return
                 }
-
                 InModuleScope -ScriptBlock {
                     Set-StrictMode -Version 1.0
 
@@ -544,6 +477,69 @@ Describe 'Testing Set Method' -Tag 'Set', 'DnsRecord', 'DnsRecordSrv' {
 
         It 'Should call all verifiable mocks' {
             Should -InvokeVerifiable
+        }
+    }
+}
+
+Describe 'Test bad inputs (both IPv4 and IPv6)' -Tag 'Test', 'DnsRecord', 'DnsRecordPtr' {
+
+    It 'Throws when placed in an incorrect IPv4 reverse lookup zone' {
+        InModuleScope -ScriptBlock {
+            Set-StrictMode -Version 1.0
+
+            $wrongIPv4ZoneState = [DnsRecordPtr] @{
+                ZoneName  = '0.168.192.in-addr.arpa'
+                IpAddress = '192.168.2.9'
+                Name      = 'quarks.contoso.com'
+                Ensure    = 'Present'
+            }
+
+            { $wrongIPv4ZoneState.Get() } | Should -Throw -ExpectedMessage ('"{0}" does not belong to the "{1}" zone.' -f $wrongIPv4ZoneState.IpAddress, $wrongIPv4ZoneState.ZoneName)
+        }
+    }
+
+    It 'Throws when placed in an incorrect IPv6 reverse lookup zone' {
+        InModuleScope -ScriptBlock {
+            Set-StrictMode -Version 1.0
+
+            $wrongIPv6ZoneState = [DnsRecordPtr] @{
+                ZoneName  = '1.0.0.d.f.ip6.arpa'
+                IpAddress = 'fd00::9'
+                Name      = 'quarks.contoso.com'
+                Ensure    = 'Present'
+            }
+
+            { $wrongIPv6ZoneState.Get() } | Should -Throw -ExpectedMessage ('"{0}" does not belong to the "{1}" zone.' -f $wrongIPv6ZoneState.IpAddress, $wrongIPv6ZoneState.ZoneName)
+        }
+    }
+
+    It 'Throws trying to put an IPv6 address into an IPv4 reverse lookup zone' {
+        InModuleScope -ScriptBlock {
+            Set-StrictMode -Version 1.0
+
+            $zoneVersionMismatchV6InV4State = [DnsRecordPtr] @{
+                ZoneName  = '0.168.192.in-addr.arpa'
+                IpAddress = 'fd00::d59'
+                Name      = 'quarks.contoso.com'
+                Ensure    = 'Present'
+            }
+
+            { $zoneVersionMismatchV6InV4State.Get() } | Should -Throw -ExpectedMessage ('The zone "{0}" is not an IPv6 reverse lookup zone.' -f $zoneVersionMismatchV6InV4State.ZoneName)
+        }
+    }
+
+    It 'Throws trying to put an IPv4 address into an IPv6 reverse lookup zone' {
+        InModuleScope -ScriptBlock {
+            Set-StrictMode -Version 1.0
+
+            $zoneVersionMismatchV4InV6State = [DnsRecordPtr] @{
+                ZoneName  = '1.0.0.d.f.ip6.arpa'
+                IpAddress = '192.168.2.9'
+                Name      = 'quarks.contoso.com'
+                Ensure    = 'Present'
+            }
+
+            { $zoneVersionMismatchV4InV6State.Get() } | Should -Throw -ExpectedMessage ('The zone "{0}" is not an IPv4 reverse lookup zone.' -f $zoneVersionMismatchV4InV6State.ZoneName)
         }
     }
 }

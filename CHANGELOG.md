@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- DnRecordBase
+- DnsRecordBase
   - Update comment regarding use of `using module` statement.
 - ResourceBase
   - Update comment regarding use of `using module` statement.
@@ -56,10 +56,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Use `New-ArgumentException` instead of `New-InvalidArgumentException`.
 - DSC_DnsServerClientSubnet
   - Fixed wrong SYNAPSIS.
+- DnsRecordCname
+  - Fixed bug with dot at the end [[Issue #266](https://github.com/dsccommunity/DnsServerDsc/issues/266)].
+- DnsRecordA
+  - Fixed [[Issue #281](https://github.com/dsccommunity/DnsServerDsc/issues/281)].
 - Pester tests
+  - Fixed issue with local testing on systems with non en-US Culture in DSC_DnsServerRootHint
+    unit test. It fixes [[Issue #283](https://github.com/dsccommunity/DnsServerDsc/issues/283)].
   - Fixed a typo in stream suppression causing Error stream to be suppressed when
     it was supposed not to be ([issue #274](https://github.com/dsccommunity/DnsServerDsc/issues/274)).
   - Fixed Unit test for DSC_DnsRecordPtr DSC resource. -ErrorMassage changed to -ErrorId 'InvalidCastParseTargetInvocation'.
+- Styling
+  - The use of Write-* cmdlets has been standardized to a consistent style with named parameters (-Message, -Object, etc).
+  - *.tests.ps1 reindexed as *.Tests.ps1 for consistency.
 
 ### Removed
 
@@ -133,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     in any base class.
   - Fixed code coverage in the pipeline ([issue #246](https://github.com/dsccommunity/DnsServerDsc/issues/246)).
 - ResourceBase
-  - Added new method `Assert()` tha calls `Assert-Module` and `AssertProperties()`.
+  - Added new method `Assert()` that calls `Assert-Module` and `AssertProperties()`.
 - DnsRecordNs
   - Added new resource to manage NS records
 - DnsRecordNsScoped
